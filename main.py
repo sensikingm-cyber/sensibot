@@ -30,36 +30,25 @@ def send_welcome(message):
     user_state[chat_id] = "waiting_for_device"
     bot.reply_to(message, "Apna device ka naam batao")
 
-# Yeh handler tumhare bhejhe hue QR code ka file_id automatically pakad lega
-@bot.message_handler(content_types=['photo'])
-def handle_docs_photo(message):
-    chat_id = message.chat.id
-    state = user_state.get(chat_id)
-    
-    # Agar user ne payment screenshot bheja hai
-    if state == "waiting_for_payment":
-        bot.reply_to(message, "Payment screenshot mil gaya hai! ✅ Admin verify kar raha hai, jaldi hi aapko sensi mil jayegi.")
-        user_state[chat_id] = "waiting_for_device"
-        return
-    
-    # Agar admin (tune) ne QR code bheja hai, toh uska file_id nikalne ke liye
-    file_id = message.photo[-1].file_id
-    bot.reply_to(message, f"✅ QR Code ka File ID yeh hai:\n\n`{file_id}`\n\nIsse copy karke code mein set kar sakte hain!")
-
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
     chat_id = message.chat.id
     state = user_state.get(chat_id)
-    text_msg = "Ho jayega\n350 rs payment karke screenshot bhejo ok 👍\n\nUPI ID: `8101310743@nyes`"
+
+    if message.photo:
+        bot.reply_to(message, "Payment screenshot mil gaya hai! ✅ Admin verify kar raha hai, jaldi hi aapko sensi mil jayegi.")
+        user_state[chat_id] = "waiting_for_device"
+        return
 
     if state == "waiting_for_device":
         user_state[chat_id] = "waiting_for_payment"
-        # Agar tumne upar bot ko photo bhej di hai, toh uska file_id yahan direct use ho jayega
-        # Ya fir agar tum chat mein abhi ek baar wohi photo bhej kar turant device ka naam likhoge, toh bot photo ke sath bhej dega.
+        text_msg = "Ho jayega\n350 rs payment karke screenshot bhejo ok 👍\n\nUPI ID: `8101310743@nyes`"
+        
+        # Yahan humne file ID ki jagah direct chat se uthane wala ya text ke sath bhejane ka code rakha hai
         try:
-            # Yeh line tumhare bhejhe hue latest photo ko utha legi
-            photos = bot.get_user_profile_photos(message.from_user.id) # fallback
-            bot.reply_to(message, text_msg)
+            # Agar tune bot ko photo bhej rakhi hai, toh uska file_id hum yahan direct hardcode bhi kar sakte hain
+            # Par abhi ke liye yeh text aur UPI ID dono bhej raha hai jo bilkul safe hai.
+            bot.reply_to(message, text_msg, parse_mode="Markdown")
         except:
             bot.reply_to(message, text_msg)
 
