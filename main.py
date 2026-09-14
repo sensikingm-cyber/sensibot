@@ -28,24 +28,28 @@ user_state = {}
 def send_welcome(message):
     chat_id = message.chat.id
     user_state[chat_id] = "waiting_for_device"
-    bot.reply_to(message, "Bolo, kaun se device ki paid sensi chahiye?\n(Jaise: Poco, Vivo, Oppo, Realme, Redmi)")
+    bot.reply_to(message, "Apna device ka naam batao")
 
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
     chat_id = message.chat.id
-    text = message.text.strip()
     state = user_state.get(chat_id)
+
+    # Agar user ne screenshot bhej diya hai
+    if message.photo:
+        bot.reply_to(message, "Payment screenshot mil gaya hai! ✅ Admin verify kar raha hai, jaldi hi aapko sensi mil jayegi.")
+        user_state[chat_id] = "waiting_for_device"
+        return
 
     if state == "waiting_for_device":
         user_state[chat_id] = "waiting_for_payment"
-        bot.reply_to(message, f"Acha, {text} device ki paid sensi ka price **Rs. 50** hai.\n\nNeeche diye gaye UPI ID par payment karo aur uska screenshot yahin bhejo:\n\nUPI ID: `example@upi`")
+        bot.reply_to(message, "Ho jayega\n350 rs payment karke screenshot bhejo ok 👍\n\nUPI ID: `8101310743@nyes`")
 
     elif state == "waiting_for_payment":
-        if message.photo:
-            bot.reply_to(message, "Payment screenshot mil gaya hai! ✅\nAdmin verify kar raha hai, jaldi hi aapko sensi mil jayegi.")
-        else:
-            bot.reply_to(message, "Bhai, please payment karne ke baad uska screenshot upload karo.")
+        bot.reply_to(message, "Bhai, please 350 rs payment karke uska screenshot bhejo ok 👍\n\nUPI ID: `8101310743@nyes`")
     else:
-        bot.reply_to(message, "Dobara shuru karne ke liye /start dabayein.")
+        user_state[chat_id] = "waiting_for_device"
+        bot.reply_to(message, "Apna device ka naam batao")
 
 bot.infinity_polling()
+
